@@ -125,20 +125,24 @@ const ClassAttack = {
 	afterAttack: function () {
 		Precast.doPrecast(false);
 
-		if (Config.Redemption instanceof Array
-			&& (me.hpPercent < Config.Redemption[0] || me.mpPercent < Config.Redemption[1])
-			&& Attack.checkNearCorpses(me) > 2 && Skill.setSkill(sdk.skills.Redemption, 0)) {
-			delay(1500);
+		// only proceed with other checks if we can use redemption and the config values aren't 0
+		if (Skill.canUse(sdk.skills.Redemption) && Config.Redemption.some(v => v > 0)) {
+			if ((me.hpPercent < Config.Redemption[0] || me.mpPercent < Config.Redemption[1])
+				&& Attack.checkNearCorpses(me) > 2 && Skill.setSkill(sdk.skills.Redemption, 0)) {
+				delay(1500);
+			}
 		}
 	},
 
-	doCast: function (unit, attackSkill, aura) {
+	doCast: function (unit, attackSkill = -1, aura = -1) {
 		if (attackSkill < 0) return 2;
+		// unit became invalidated
+		if (!unit || !unit.attackable) return 1;
 		
 		switch (attackSkill) {
 		case sdk.skills.BlessedHammer:
 			// todo: add doll avoid to other classes
-			if (Config.AvoidDolls && unit.dolls) {
+			if (Config.AvoidDolls && unit.isDoll) {
 				this.dollAvoid(unit);
 				aura > -1 && Skill.setSkill(aura, 0);
 				Skill.cast(attackSkill, Skill.getHand(attackSkill), unit);
@@ -212,10 +216,8 @@ const ClassAttack = {
 		case sdk.skills.Sacrifice:
 		case sdk.skills.Zeal:
 		case sdk.skills.Vengeance:
-			if (!Attack.validSpot(unit.x, unit.y)) {
-				if (Attack.monsterObjects.indexOf(unit.classid) === -1) {
-					return 0;
-				}
+			if (!Attack.validSpot(unit.x, unit.y, attackSkill, unit.classid)) {
+				return 0;
 			}
 			
 			// 3591 - wall/line of sight/ranged/items/objects/closeddoor 
@@ -232,7 +234,7 @@ const ClassAttack = {
 
 			break;
 		default:
-			if (Skill.getRange(attackSkill) < 4 && !Attack.validSpot(unit.x, unit.y)) return 0;
+			if (Skill.getRange(attackSkill) < 4 && !Attack.validSpot(unit.x, unit.y, attackSkill, unit.classid)) return 0;
 
 			if (unit.distance > Skill.getRange(attackSkill) || checkCollision(me, unit, 0x4)) {
 				let walk = (attackSkill !== 97 && Skill.getRange(attackSkill) < 4 && unit.distance < 10 && !checkCollision(me, unit, 0x1));
@@ -318,6 +320,7 @@ const ClassAttack = {
 	},
 
 	reposition: function (x, y) {
+		if (typeof x !== "number" || typeof y !== "number") return false;
 		if ([x, y].distance > 0) {
 			if (Pather.useTeleport()) {
 				[x, y].distance > 30 ? Pather.moveTo(x, y) : Pather.teleportTo(x, y, 3);
