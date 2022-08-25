@@ -70,416 +70,304 @@ new Overrides.Override(Starter, Starter.receiveCopyData, function (orignal, mode
 	}
 }).apply();
 
-function locationAction (location) {
+Starter.locations[sdk.game.locations.Lobby] = () => {
+	D2Bot.updateStatus("Lobby");
+	me.blockKeys = false;
+	Starter.loginRetry = 0;
+	!Starter.firstLogin && (Starter.firstLogin = true);
+	Controls.LobbyEnterChat.click();
+};
+
+Starter.locations[sdk.game.locations.LobbyChat] = () => {
 	let i, n, string, text, regex, fullText, lines;
+	D2Bot.updateStatus("Lobby Chat");
 
-	MainSwitch:
-	switch (location) {
-	case sdk.game.locations.PreSplash:
-		ControlAction.click();
+	if (Starter.inGame) {
+		if (Starter.LocationEvents.oogCheck()) return;
 
-		break;
-	case sdk.game.locations.Lobby:
-		D2Bot.updateStatus("Lobby");
+		print("updating runs");
+		D2Bot.updateRuns();
 
-		me.blockKeys = false;
-		Starter.loginRetry = 0;
-		!Starter.firstLogin && (Starter.firstLogin = true);
-		Controls.LobbyEnterChat.click();
+		Starter.gameCount += 1;
+		Starter.lastGameStatus = "ready";
+		Starter.inGame = false;
+		retry = 0;
+	}
 
-		break;
-	case sdk.game.locations.LobbyChat:
-		D2Bot.updateStatus("Lobby Chat");
+	// Muted key handler
+	fullText = "";
+	lines = Controls.LobbyChat.getText();
+	if (!lines) return;
 
-		if (Starter.inGame) {
-			if (AutoMule.outOfGameCheck() || TorchSystem.outOfGameCheck() || Gambling.outOfGameCheck() || CraftingSystem.outOfGameCheck()) {
-				break;
+	fullText = lines.join(" ").replace(/\s+/g, " ");
+
+	if (fullText.match(Starter.Config.MutedKeyTrigger.replace(/\s+/g, " "), "gi")) {
+		D2Bot.printToConsole(Starter.gameInfo.mpq + " is muted.", sdk.colors.D2Bot.Gold);
+
+		ControlAction.mutedKey = true;
+
+		if (Starter.Config.SkipMutedKey) {
+			if (Starter.gameInfo.switchKeys) {
+				ControlAction.timeoutDelay("Key switch delay", Starter.Config.SwitchKeyDelay * 1000);
+				D2Bot.restart(true);
+			} else {
+				D2Bot.stop();
+			}
+		}
+	}
+
+	if (!ControlAction.mutedKey && (!Starter.chatActionsDone || getTickCount() - channelTick >= 120e3)) {
+		if (Starter.Config.JoinChannel !== "") {
+			if (typeof AdvancedConfig[me.profile] === "object" && typeof AdvancedConfig[me.profile].JoinChannel === "string") {
+				joinInfo.joinChannel = AdvancedConfig[me.profile].JoinChannel;
+			} else {
+				joinInfo.joinChannel = Starter.Config.JoinChannel;
 			}
 
-			print("updating runs");
-			D2Bot.updateRuns();
-
-			Starter.gameCount += 1;
-			Starter.lastGameStatus = "ready";
-			Starter.inGame = false;
-			retry = 0;
-		}
-
-		// Muted key handler
-		fullText = "";
-		lines = Controls.LobbyChat.getText();
-
-		if (!lines) {
-			break;
-		}
-
-		fullText = lines.join(" ").replace(/\s+/g, " ");
-
-		if (fullText.match(Starter.Config.MutedKeyTrigger.replace(/\s+/g, " "), "gi")) {
-			D2Bot.printToConsole(Starter.gameInfo.mpq + " is muted.", sdk.colors.D2Bot.Gold);
-
-			ControlAction.mutedKey = true;
-
-			if (Starter.Config.SkipMutedKey) {
-				if (Starter.gameInfo.switchKeys) {
-					ControlAction.timeoutDelay("Key switch delay", Starter.Config.SwitchKeyDelay * 1000);
-					D2Bot.restart(true);
+			if (joinInfo.joinChannel) {
+				if (ControlAction.joinChannel(joinInfo.joinChannel)) {
+					Starter.useChat = true;
 				} else {
-					D2Bot.stop();
+					print("Unable to join channel, chat messages disabled.");
+
+					Starter.useChat = false;
 				}
 			}
 		}
 
-		if (!ControlAction.mutedKey && (!Starter.chatActionsDone || getTickCount() - channelTick >= 120e3)) {
-			if (Starter.Config.JoinChannel !== "") {
-				if (typeof AdvancedConfig[me.profile] === "object" && typeof AdvancedConfig[me.profile].JoinChannel === "string") {
-					joinInfo.joinChannel = AdvancedConfig[me.profile].JoinChannel;
-				} else {
-					joinInfo.joinChannel = Starter.Config.JoinChannel;
-				}
+		if (Starter.Config.Follow.length > 0 && !Starter.channelNotify) {
+			Starter.sayMsg("/d2notify");
+			lines = Controls.LobbyChat.getText();
+			if (!lines) return;
 
-				if (joinInfo.joinChannel) {
-					if (ControlAction.joinChannel(joinInfo.joinChannel)) {
-						Starter.useChat = true;
-					} else {
-						print("Unable to join channel, chat messages disabled.");
-
-						Starter.useChat = false;
-					}
-				}
-			}
-
-			if (Starter.Config.Follow.length > 0 && !Starter.channelNotify) {
+			if (lines.some(line => line.match("notifications are disabled"))) {
 				Starter.sayMsg("/d2notify");
 				lines = Controls.LobbyChat.getText();
-
-				if (!lines) {
-					break;
-				}
-
-				if (lines.some(line => line.match("notifications are disabled"))) {
-					Starter.sayMsg("/d2notify");
-					lines = Controls.LobbyChat.getText();
-				}
-
-				if (lines.some(line => line.match("notifications are enabled"))) {
-					Starter.channelNotify = true;
-				}
 			}
 
-			// Added !chatActionsDone condition to prevent spam
-			if (Starter.Config.FirstJoinMessage !== "" && !Starter.chatActionsDone) {
-				ControlAction.timeoutDelay("Chat delay", Starter.Config.ChatActionsDelay * 1e3);
-				Starter.sayMsg(Starter.Config.FirstJoinMessage);
-				delay(500);
+			if (lines.some(line => line.match("notifications are enabled"))) {
+				Starter.channelNotify = true;
 			}
-
-			Starter.chatActionsDone = true;
-			channelTick = getTickCount();
 		}
 
-		if (Starter.Config.FriendListQuery > 0 && getTickCount() - fListTick >= Starter.Config.FriendListQuery * 1000) {
-			say("/f l");
-
-			fListTick = getTickCount();
+		// Added !chatActionsDone condition to prevent spam
+		if (Starter.Config.FirstJoinMessage !== "" && !Starter.chatActionsDone) {
+			ControlAction.timeoutDelay("Chat delay", Starter.Config.ChatActionsDelay * 1e3);
+			Starter.sayMsg(Starter.Config.FirstJoinMessage);
+			delay(500);
 		}
 
-		switch (Starter.lastGameStatus) {
-		case "pending": // Most likely FTJ (can't detect it directly)
-			string = "";
-			text = Controls.LobbyServerDown.getText();
+		Starter.chatActionsDone = true;
+		channelTick = getTickCount();
+	}
 
-			if (text) {
-				for (i = 0; i < text.length; i += 1) {
-					string += text[i];
+	if (Starter.Config.FriendListQuery > 0 && getTickCount() - fListTick >= Starter.Config.FriendListQuery * 1000) {
+		say("/f l");
 
-					if (i !== text.length - 1) {
-						string += " ";
-					}
-				}
+		fListTick = getTickCount();
+	}
 
-				// Didn't meet level restriction
-				if (string === getLocaleString(sdk.locale.text.DoNotMeetLevelReqForThisGame)) {
-					print(string);
+	switch (Starter.lastGameStatus) {
+	case "pending": // Most likely FTJ (can't detect it directly)
+		string = "";
+		text = Controls.LobbyServerDown.getText();
 
-					retry = Starter.Config.JoinRetry;
+		if (text) {
+			for (i = 0; i < text.length; i += 1) {
+				string += text[i];
 
-					break;
+				if (i !== text.length - 1) {
+					string += " ";
 				}
 			}
 
-			retry += 1;
+			// Didn't meet level restriction
+			if (string === getLocaleString(sdk.locale.text.DoNotMeetLevelReqForThisGame)) {
+				print(string);
 
-			D2Bot.updateRuns();
+				retry = Starter.Config.JoinRetry;
 
-			if (retry < Starter.Config.JoinRetry) {
-				Controls.JoinGameWindow.click();
-
-				break MainSwitch;
-			}
-
-			break;
-		case "DNE": // Game didn't exist
-			retry += 1;
-
-			break;
-		case "FULL": // Game is full
-			retry = Starter.Config.JoinRetry;
-
-			break;
-		}
-
-		if (retry >= Starter.Config.JoinRetry) {
-			D2Bot.printToConsole("Failed to join " + joinInfo.gameName + ". Aborting.");
-			badGames.push(joinInfo.gameName);
-
-			Starter.lastGameStatus = "ready";
-			joinInfo.oldGame = joinInfo.gameName;
-			retry = 0;
-		}
-
-		fullText = "";
-		lines = Controls.LobbyChat.getText();
-
-		if (!lines) {
-			break;
-		}
-
-		fullText = lines.join(" ").replace(/\s+/g, " ");
-
-		if (lastText === fullText) {
-			if (joinInfo.gameName && joinInfo.gameName !== joinInfo.oldGame && badGames.indexOf(joinInfo.gameName) === -1) {
-				// we have a game and nothing else has changed since last announcement so go ahead and try joining again
-				Controls.JoinGameWindow.click();
-			}
-			// nothing has changed since our last check so break
-			break;
-		}
-
-		lastText = fullText;
-
-		// we are set to follow a specific leader, lets look for their messages
-		if (Starter.Config.Follow.length > 0) {
-			let newLines = lines
-				.map((line, index) => {
-					if (index > 0
-						// eslint-disable-next-line no-useless-escape
-						&& !line.match(/\<.*\>/, "gi")
-						&& !line.match(" has left", "gi")
-						&& !line.match(" has joined", "gi")) {
-						line = lines[index - 1] + line;
-					}
-					return line;
-				})
-				.filter(line => line.match("Next game is", "gi"));
-
-			if (newLines.length === 0) {
 				break;
 			}
-
-			for (n = 0; n < Starter.Config.Follow.length; n++) {
-				let test = [];
-
-				newLines.forEach(element => {
-					if (element.includes(Starter.Config.Follow[n])) {
-						test.push(element);
-					}
-				});
-
-				if (test.length === 0) continue;
-				test.reverse();
-
-				for (let msg = 0; msg < test.length; msg++) {
-					let checkName = test[msg].toString();
-					let hasPass = checkName.indexOf("/") > -1;
-
-					let gName = (checkName.slice(checkName.indexOf("is ") + 3, (hasPass ? checkName.indexOf("/") : undefined)) || "").trim();
-					if (gName.length > 15) continue; // invalid game name
-					let gPass = (hasPass ? checkName.slice(checkName.lastIndexOf("/") + 1) : "");
-					if (gPass.length > 15) continue; // invalid game pass
-					joinInfo.gameName = gName;
-					joinInfo.gamePass = gPass;
-					console.debug(joinInfo.gameName + " " + joinInfo.gamePass);
-
-					if (joinInfo.gameName && joinInfo.gameName !== joinInfo.oldGame && badGames.indexOf(joinInfo.gameName) === -1) {
-						// wait until leader has left the channel
-						if (Starter.Config.JoinDelay && Starter.channelNotify) {
-							let wTick = getTickCount();
-
-							while (true) {
-								lines = Controls.LobbyChat.getText();
-
-								if (!lines || (getTickCount() - wTick > Time.minutes(1))) {
-									break;
-								}
-
-								if (lines.some(line => line.match(Starter.Config.Follow[n] + " has left"))) {
-									break;
-								}
-
-								delay(2000);
-							}
-						}
-
-						Controls.JoinGameWindow.click();
-
-						break;
-					}
-				}
-			}
 		}
 
-		// we are just trying to follow game names
-		for (let n = 0; n < Starter.Config.Games.length; n += 1) {
-			if (Starter.Config.Games[n] === "") continue;
-			regex = new RegExp("\\W+" + Starter.Config.Games[n].toLowerCase() + "\\d+", "gi");
-			joinInfo.gameName = fullText.match(regex);
+		retry += 1;
 
-			if (joinInfo.gameName) {
-				// use last match and trim it
-				joinInfo.gameName = joinInfo.gameName[joinInfo.gameName.length - 1].toString().replace(/^\W*/, "");
-				joinInfo.gamePass = Starter.Config.Passwords[n] || "";
+		D2Bot.updateRuns();
+
+		if (retry < Starter.Config.JoinRetry) {
+			Controls.JoinGameWindow.click();
+			return;
+		}
+
+		break;
+	case "DNE": // Game didn't exist
+		retry += 1;
+
+		break;
+	case "FULL": // Game is full
+		retry = Starter.Config.JoinRetry;
+
+		break;
+	}
+
+	if (retry >= Starter.Config.JoinRetry) {
+		D2Bot.printToConsole("Failed to join " + joinInfo.gameName + ". Aborting.");
+		badGames.push(joinInfo.gameName);
+
+		Starter.lastGameStatus = "ready";
+		joinInfo.oldGame = joinInfo.gameName;
+		retry = 0;
+	}
+
+	fullText = "";
+	lines = Controls.LobbyChat.getText();
+	if (!lines) return;
+
+	fullText = lines.join(" ").replace(/\s+/g, " ");
+
+	if (lastText === fullText) {
+		if (joinInfo.gameName && joinInfo.gameName !== joinInfo.oldGame && badGames.indexOf(joinInfo.gameName) === -1) {
+			// we have a game and nothing else has changed since last announcement so go ahead and try joining again
+			Controls.JoinGameWindow.click();
+		}
+		// nothing has changed since our last check so break
+		return;
+	}
+
+	lastText = fullText;
+
+	// we are set to follow a specific leader, lets look for their messages
+	if (Starter.Config.Follow.length > 0) {
+		let newLines = lines
+			.map((line, index) => {
+				if (index > 0
+					// eslint-disable-next-line no-useless-escape
+					&& !line.match(/\<.*\>/, "gi")
+					&& !line.match(" has left", "gi")
+					&& !line.match(" has joined", "gi")) {
+					line = lines[index - 1] + line;
+				}
+				return line;
+			})
+			.filter(line => line.match("Next game is", "gi"));
+		if (newLines.length === 0) return;
+
+		for (n = 0; n < Starter.Config.Follow.length; n++) {
+			let test = [];
+
+			newLines.forEach(element => {
+				if (element.includes(Starter.Config.Follow[n])) {
+					test.push(element);
+				}
+			});
+
+			if (test.length === 0) continue;
+			test.reverse();
+
+			for (let msg = 0; msg < test.length; msg++) {
+				let checkName = test[msg].toString();
+				let hasPass = checkName.indexOf("/") > -1;
+
+				let gName = (checkName.slice(checkName.indexOf("is ") + 3, (hasPass ? checkName.indexOf("/") : undefined)) || "").trim();
+				if (gName.length > 15) continue; // invalid game name
+				let gPass = (hasPass ? checkName.slice(checkName.lastIndexOf("/") + 1) : "");
+				if (gPass.length > 15) continue; // invalid game pass
+				joinInfo.gameName = gName;
+				joinInfo.gamePass = gPass;
+				console.debug(joinInfo.gameName + " " + joinInfo.gamePass);
 
 				if (joinInfo.gameName && joinInfo.gameName !== joinInfo.oldGame && badGames.indexOf(joinInfo.gameName) === -1) {
+					// wait until leader has left the channel
+					if (Starter.Config.JoinDelay && Starter.channelNotify) {
+						let wTick = getTickCount();
+
+						while (true) {
+							lines = Controls.LobbyChat.getText();
+
+							if (!lines || (getTickCount() - wTick > Time.minutes(1))) {
+								break;
+							}
+
+							if (lines.some(line => line.match(Starter.Config.Follow[n] + " has left"))) {
+								break;
+							}
+
+							delay(2000);
+						}
+					}
+
 					Controls.JoinGameWindow.click();
 
 					break;
 				}
 			}
 		}
-
-		break;
-	case sdk.game.locations.WaitingInLine:
-	case sdk.game.locations.CreateGame:
-		Controls.CancelCreateGame.click();
-
-		break;
-	case sdk.game.locations.JoinGame:
-		if (joinInfo.oldGame === joinInfo.gameName || badGames.includes(joinInfo.gameName)) {
-			Controls.CancelJoinGame.click();
-		}
-
-		D2Bot.updateStatus("Join Game");
-
-		if (joinInfo.gameName !== "") {
-			print("ÿc2Joining ÿc0" + joinInfo.gameName);
-			Controls.JoinGameName.setText(joinInfo.gameName);
-			Controls.JoinGamePass.setText(joinInfo.gamePass);
-
-			if (typeof AdvancedConfig[me.profile] === "object" && typeof AdvancedConfig[me.profile].AnnounceGame === "boolean" && typeof AdvancedConfig[me.profile].AnnounceMessage === "string") {
-				Starter.sayMsg(AdvancedConfig[me.profile].AnnounceMessage + " " + joinInfo.gameName);
-			}
-
-			// Only delay on first join - the rest is handled by GameDoesNotExistTimeout. Any other case is instant fail (ie. full game).
-			if (retry === 0 || Starter.lastGameStatus === "pending") {
-				if (typeof AdvancedConfig[me.profile] === "object" && typeof AdvancedConfig[me.profile].JoinDelay === "number") {
-					ControlAction.timeoutDelay("Custom Join Delay", AdvancedConfig[me.profile].JoinDelay * 1e3);
-				} else if (Starter.Config.JoinDelay) {
-					ControlAction.timeoutDelay("Join Game Delay", Starter.Config.JoinDelay * 1e3);
-				}
-			}
-
-			me.blockmouse = true;
-
-			Controls.JoinGame.click();
-
-			me.blockmouse = false;
-			Starter.lastGameStatus = "pending";
-
-			Starter.locationTimeout(5000, location);
-		}
-
-		break;
-	case sdk.game.locations.Ladder:
-	case sdk.game.locations.ChannelList:
-		break;
-	case sdk.game.locations.MainMenu:
-	case sdk.game.locations.Login:
-	case sdk.game.locations.CharSelect:
-	case sdk.game.locations.SplashScreen:
-		Starter.LocationEvents.login();
-
-		break;
-	case sdk.game.locations.LoginError:
-	case sdk.game.locations.InvalidCdKey:
-	case sdk.game.locations.CdKeyInUse:
-		Starter.LocationEvents.loginError();
-
-		break;
-	case sdk.game.locations.LoginUnableToConnect:
-	case sdk.game.locations.TcpIpUnableToConnect:
-		Starter.LocationEvents.unableToConnect();
-
-		break;
-	case sdk.game.locations.RealmDown:
-		Starter.LocationEvents.realmDown();
-
-		break;
-	case sdk.game.locations.Disconnected:
-	case sdk.game.locations.LobbyLostConnection:
-		D2Bot.updateStatus("Disconnected/LostConnection");
-		delay(1000);
-		Controls.OkCentered.click();
-
-		break;
-	case sdk.game.locations.CharSelectPleaseWait:
-		!Starter.locationTimeout(Starter.Config.PleaseWaitTimeout * 1e3, location) && Controls.OkCentered.click();
-
-		break;
-	case sdk.game.locations.SelectDifficultySP:
-		break;
-	case sdk.game.locations.MainMenuConnecting:
-		!Starter.locationTimeout(Starter.Config.ConnectingTimeout * 1e3, location) && Controls.LoginCancelWait.click();
-
-		break;
-	case sdk.game.locations.CharSelectConnecting:
-	case sdk.game.locations.CharSelectNoChars:
-		Starter.LocationEvents.charSelectError();
-
-		break;
-	case sdk.game.locations.ServerDown:
-		break;
-	case sdk.game.locations.LobbyPleaseWait:
-		!Starter.locationTimeout(Starter.Config.PleaseWaitTimeout * 1e3, location) && Controls.OkCentered.click();
-
-		break;
-	case sdk.game.locations.GameNameExists:
-		break;
-	case sdk.game.locations.GatewaySelect:
-		Controls.GatewayCancel.click();
-
-		break;
-	case sdk.game.locations.GameDoesNotExist:
-		Starter.LocationEvents.gameDoesNotExist();
-		Starter.lastGameStatus = "DNE";
-
-		break;
-	case sdk.game.locations.GameIsFull:
-		badGames.push(joinInfo.gameName);
-		Controls.JoinGameWindow.click();
-		Controls.CancelCreateGame.click();
-		Starter.lastGameStatus = "FULL";
-
-		break;
-	case sdk.game.locations.OtherMultiplayer:
-		Starter.LocationEvents.otherMultiplayerSelect();
-
-		break;
-	case sdk.game.locations.TcpIp:
-	case sdk.game.locations.TcpIpEnterIp:
-		Controls.TcpIpCancel.click();
-
-		break;
-	default:
-		if (location !== undefined) {
-			D2Bot.printToConsole("Unhandled location " + location);
-			delay(500);
-			D2Bot.restart();
-		}
-
-		break;
 	}
-}
+
+	// we are just trying to follow game names
+	for (let n = 0; n < Starter.Config.Games.length; n += 1) {
+		if (Starter.Config.Games[n] === "") continue;
+		regex = new RegExp("\\W+" + Starter.Config.Games[n].toLowerCase() + "\\d+", "gi");
+		joinInfo.gameName = fullText.match(regex);
+
+		if (joinInfo.gameName) {
+			// use last match and trim it
+			joinInfo.gameName = joinInfo.gameName[joinInfo.gameName.length - 1].toString().replace(/^\W*/, "");
+			joinInfo.gamePass = Starter.Config.Passwords[n] || "";
+
+			if (joinInfo.gameName && joinInfo.gameName !== joinInfo.oldGame && badGames.indexOf(joinInfo.gameName) === -1) {
+				Controls.JoinGameWindow.click();
+
+				break;
+			}
+		}
+	}
+};
+Starter.locations[sdk.game.locations.WaitingInLine] = () => Controls.CancelCreateGame.click() && Controls.JoinGameWindow.click();
+Starter.locations[sdk.game.locations.JoinGame] = () => Controls.CancelCreateGame.click() && Controls.JoinGameWindow.click();
+Starter.locations[sdk.game.locations.JoinGame] = (loc) => {
+	if (joinInfo.oldGame === joinInfo.gameName || badGames.includes(joinInfo.gameName)) {
+		Controls.CancelJoinGame.click();
+	}
+
+	D2Bot.updateStatus("Join Game");
+
+	if (joinInfo.gameName !== "") {
+		print("ÿc2Joining ÿc0" + joinInfo.gameName);
+		Controls.JoinGameName.setText(joinInfo.gameName);
+		Controls.JoinGamePass.setText(joinInfo.gamePass);
+
+		if (typeof AdvancedConfig[me.profile] === "object" && typeof AdvancedConfig[me.profile].AnnounceGame === "boolean" && typeof AdvancedConfig[me.profile].AnnounceMessage === "string") {
+			Starter.sayMsg(AdvancedConfig[me.profile].AnnounceMessage + " " + joinInfo.gameName);
+		}
+
+		// Only delay on first join - the rest is handled by GameDoesNotExistTimeout. Any other case is instant fail (ie. full game).
+		if (retry === 0 || Starter.lastGameStatus === "pending") {
+			if (typeof AdvancedConfig[me.profile] === "object" && typeof AdvancedConfig[me.profile].JoinDelay === "number") {
+				ControlAction.timeoutDelay("Custom Join Delay", AdvancedConfig[me.profile].JoinDelay * 1e3);
+			} else if (Starter.Config.JoinDelay) {
+				ControlAction.timeoutDelay("Join Game Delay", Starter.Config.JoinDelay * 1e3);
+			}
+		}
+
+		me.blockmouse = true;
+		Controls.JoinGame.click();
+		me.blockmouse = false;
+		Starter.lastGameStatus = "pending";
+		Starter.locationTimeout(5000, loc);
+	}
+};
+Starter.locations[sdk.game.locations.GameIsFull] = () => {
+	badGames.push(joinInfo.gameName);
+	Controls.JoinGameWindow.click();
+	Controls.CancelCreateGame.click();
+	Starter.lastGameStatus = "FULL";
+};
+Starter.locations[sdk.game.locations.GameDoesNotExist] = () => {
+	Starter.LocationEvents.gameDoesNotExist();
+	Starter.lastGameStatus = "DNE";
+};
 
 function main() {
 	addEventListener("copydata", Starter.receiveCopyData);
@@ -545,7 +433,12 @@ function main() {
 
 		joinInfo.inGame = false;
 
-		locationAction(getLocation());
+		try {
+			let loc = getLocation();
+			(Starter.locations[loc] !== undefined) && Starter.locations[loc](loc);
+		} catch (e) {
+			console.error(e, "LOCATION: " + getLocation());
+		}
 		delay(1000);
 	}
 }
