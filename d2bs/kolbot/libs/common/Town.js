@@ -148,6 +148,8 @@ const Town = {
 		return false;
 	},
 
+	allowBoScriptCheck: true,
+
 	// Do town chores
 	doChores: function (repair = false) {
 		delay(250);
@@ -183,6 +185,21 @@ const Town = {
 		this.stash(true);
 		!!me.getItem(sdk.items.TomeofTownPortal) && this.clearScrolls();
 
+		// we are no longer bo'ed from our initial one, lets go get another
+		if (Town.allowBoScriptCheck && Scripts.BattleOrders && Config.BattleOrders.Mode === 1 && !me.getState(sdk.states.BattleOrders)) {
+			// first lets determine if bo-er is still in place - @todo better way to detemine if bo-er is running BoBarbHelper vs BattlerOrders
+			try {
+				Town.allowBoScriptCheck = false;
+				let possibleBoer = Misc.findPlayerInArea(sdk.areas.CatacombsLvl2);
+				if (possibleBoer) {
+					Loader.runScript("BattleOrders");
+					!me.inTown && Town.goToTown();
+				}
+			} finally {
+				Town.allowBoScriptCheck = true;
+			}
+		}
+
 		me.act !== preAct && this.goToTown(preAct);
 		me.cancelUIFlags();
 		!me.barbarian && Precast.haveCTA === -1 && Precast.doPrecast(false);
@@ -200,19 +217,19 @@ const Town = {
 		!me.inTown && Town.goToTown();
 		me.cancelUIFlags();
 
-		switch (NPC[name]) {
-		case NPC.Jerhyn:
-			!Game.getNPC(NPC.Jerhyn) && Town.move("palace");
-			break;
-		case NPC.Hratli:
-			if (!me.getQuest(sdk.quest.id.SpokeToHratli, sdk.quest.states.Completed)) {
-				Town.move(NPC.Meshif);
-				break;
+		(() => {
+			switch (NPC[name]) {
+			case NPC.Jerhyn:
+				return (!Game.getNPC(NPC.Jerhyn) && Town.move("palace"));
+			case NPC.Hratli:
+				if (!me.getQuest(sdk.quest.id.SpokeToHratli, sdk.quest.states.Completed)) {
+					return Town.move(NPC.Meshif);
+				}
+				// eslint-disable-next-line no-fallthrough
+			default:
+				return Town.move(NPC[name]);
 			}
-			// eslint-disable-next-line no-fallthrough
-		default:
-			Town.move(NPC[name]);
-		}
+		})();
 
 		let npc = Game.getNPC(NPC[name]);
 

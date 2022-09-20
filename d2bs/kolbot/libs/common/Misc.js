@@ -945,6 +945,21 @@ const Misc = {
 		return false;
 	},
 
+	// Find first player in specified area or specifc player in area
+	findPlayerInArea: function (area = 0, name = "") {
+		let player = getParty();
+
+		if (player) {
+			do {
+				if (player.name !== me.name && player.area === area && (!name || player.name === name)) {
+					return player;
+				}
+			} while (player.getNext());
+		}
+
+		return false;
+	},
+
 	// Get player unit
 	getPlayerUnit: function (name) {
 		let player = Game.getPlayer(name);
@@ -1116,11 +1131,8 @@ const Misc = {
 				(specialChest || i > 2) ? Misc.click(0, 0, unit) : Packet.entityInteract(unit);
 			}
 
-			if (Misc.poll(() => unit.mode, 1000, 50)) {
-				return true;
-			} else {
-				Packet.flash(me.gid);
-			}
+			if (Misc.poll(() => unit.mode, 1000, 50)) return true;
+			Packet.flash(me.gid);
 		}
 
 		// Click to stop walking in case we got stuck
