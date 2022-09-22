@@ -1773,9 +1773,18 @@ const Misc = {
 
 		if (Config.TownCheck && !me.inTown) {
 			try {
-				if (Town.needPotions() || (Config.OpenChests.Enabled && Town.needKeys())
-					|| (Scripts.AutoBoScript && Config.AutoBo.AllowTownCheck && Config.AutoBo.Mode === 1 && !me.getState(sdk.states.BattleOrders))) {
+				if (Town.needPotions() || (Config.OpenChests.Enabled && Town.needKeys())) {
 					check = true;
+				}
+				if (!check && Scripts.AutoBoScript && Config.AutoBo.AllowTownCheck && Config.AutoBo.Mode === 1 && !me.getState(sdk.states.BattleOrders)) {
+					// make sure our helper is in place @todo is have communication so the bo-helper can participate in the run
+					let myBoer = AutoBo.haveHelper();
+					if (myBoer) {
+						let boHelper = Misc.poll(() => Misc.findPlayerInArea(myBoer.area, myBoer.character), Time.seconds(1), 200);
+						if (boHelper) {
+							check = true;
+						}
+					}
 				}
 			} catch (e) {
 				return false;
