@@ -45,8 +45,16 @@ const AutoBo = {
 			Precast.enabled = false;
 			Pather.useWaypoint(myBoer.area, true);
 			let boer = Game.getPlayer(myBoer.character);
-			boer && Pather.moveNearUnit(boer, 5);
-			Misc.poll(() => me.getState(sdk.states.BattleOrders), Time.seconds(30), Time.seconds(1));
+			boer && Pather.moveNearUnit(boer, 3);
+			let i = 0;
+			Misc.poll(() => {
+				if (i > 0 && i % 5 === 0) {
+					let coord = CollMap.getRandCoordinate(me.x, -6, 6, me.y, -6, 6);
+					!!coord && Attack.validSpot(coord.x, coord.y) && Pather.moveTo(coord.x, coord.y);
+				}
+				i++;
+				return me.getState(sdk.states.BattleOrders);
+			}, Time.seconds(30), Time.seconds(1));
 			delay(1000);
 			console.log("Got bo-ed");
 			// use wp back to town

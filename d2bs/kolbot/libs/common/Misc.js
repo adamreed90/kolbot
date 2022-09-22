@@ -1774,7 +1774,7 @@ const Misc = {
 		if (Config.TownCheck && !me.inTown) {
 			try {
 				if (Town.needPotions() || (Config.OpenChests.Enabled && Town.needKeys())
-					|| (Scripts.AutoBoScript && Config.AutoBo.Mode === 1 && !me.getState(sdk.states.BattleOrders))) {
+					|| (Scripts.AutoBoScript && Config.AutoBo.AllowTownCheck && Config.AutoBo.Mode === 1 && !me.getState(sdk.states.BattleOrders))) {
 					check = true;
 				}
 			} catch (e) {

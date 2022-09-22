@@ -307,6 +307,8 @@ let Config = {
 	BossPriority: false,
 	MaxAttackCount: 300,
 
+	UseCta: true,
+
 	// Amazon specific
 	LightningFuryDelay: 0,
 	UseInnerSight: false,
@@ -500,6 +502,7 @@ let Config = {
 	AutoBo: {
 		Mode: -1,
 		Boer: "",
+		AllowTownCheck: true,
 	},
 	BattleOrders: {
 		Mode: 0,

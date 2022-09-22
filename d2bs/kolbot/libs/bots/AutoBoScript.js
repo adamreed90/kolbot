@@ -20,7 +20,7 @@ function AutoBoScript () {
 		Config.BattleOrders.Wp = autoBoInfo.area;
 		try {
 			Town.allowBoScriptCheck = false;
-			Loader.runScript("BattleOrders");
+			Loader.runScript("BattleOrders", () => Config.AutoBo.AllowTownCheck = false);
 		} finally {
 			Town.allowBoScriptCheck = true;
 		}
