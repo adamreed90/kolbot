@@ -65,7 +65,7 @@ function BoBarbHelper () {
 		print("monsters can find their way to wps ...");
 		delay(2000);
 		hideConsole();
-		me.overhead("set LifeChiken to 40");
+		me.overhead("set LifeChicken to 40");
 		Config.LifeChicken = 40;
 	}
 

@@ -9,11 +9,11 @@ js_strict(true);
 include("json2.js");
 include("NTItemParser.dbl");
 include("OOG.js");
-include("Gambling.js");
-include("CraftingSystem.js");
+include("gambling.js");
+include("craftingsystem.js");
 include("common/util.js");
-
 includeCommonLibs();
+includeSystemLibs();
 
 function main() {
 	// Variables and functions

@@ -186,7 +186,7 @@ const Town = {
 		!!me.getItem(sdk.items.TomeofTownPortal) && this.clearScrolls();
 
 		// we are no longer bo'ed from our initial one, lets go get another
-		if (Town.allowBoScriptCheck && Scripts.AutoBoScript && Config.BattleOrders.Mode === 1 && !me.getState(sdk.states.BattleOrders)) {
+		if (Town.allowBoScriptCheck && Scripts.AutoBoScript && Config.AutoBo.Mode === 1 && !me.getState(sdk.states.BattleOrders)) {
 			AutoBo.getBo();
 		}
 

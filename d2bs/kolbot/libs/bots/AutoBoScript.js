@@ -15,7 +15,15 @@ function AutoBoScript () {
 		Config.BoBarbHelper.Wp = autoBoInfo.area;
 		Loader.runScript("BoBarbHelper");
 	} else if (Config.AutoBo.Mode === boMode.Receive) {
-		AutoBo.getBo();
+		// very first bo just uses BattleOrders script
+		Config.BattleOrders.Mode = 1;
+		Config.BattleOrders.Wp = autoBoInfo.area;
+		try {
+			Town.allowBoScriptCheck = false;
+			Loader.runScript("BattleOrders");
+		} finally {
+			Town.allowBoScriptCheck = true;
+		}
 	}
 
 	return true;

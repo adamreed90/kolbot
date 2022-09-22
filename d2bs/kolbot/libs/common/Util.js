@@ -6,7 +6,7 @@
 */
 
 // torn on if these include functions should be here or in polyfill - not exactly polyfill functions but sorta?
-const includeIfNotIncluded = (file = "") => {
+const includeIfNotIncluded = function (file = "") {
 	if (!isIncluded(file)) {
 		if (!include(file)) {
 			console.error("Failed to include " + file);
@@ -16,7 +16,7 @@ const includeIfNotIncluded = (file = "") => {
 	return true;
 };
 
-const includeCommonLibs = () => {
+const includeCommonLibs = function () {
 	includeIfNotIncluded("Polyfill.js");
 	let files = dopen("libs/common/").getFiles();
 	if (!files.length) throw new Error("Failed to find my files");
@@ -37,7 +37,7 @@ const includeCommonLibs = () => {
 		});
 };
 
-const includeOOGLibs = () => {
+const includeOOGLibs = function () {
 	includeIfNotIncluded("Polyfill.js");
 	let files = dopen("libs/oog/").getFiles();
 	if (!files.length) throw new Error("Failed to find my files");
@@ -58,11 +58,32 @@ const includeOOGLibs = () => {
 		});
 };
 
+const includeSystemLibs = function () {
+	includeIfNotIncluded("Polyfill.js");
+	let files = dopen("libs/systems/").getFiles();
+	if (!files.length) throw new Error("Failed to find my files");
+	if (!files.includes("MuleLogger.js")) {
+		console.warn("Incorrect Files?", files);
+		// something went wrong?
+		while (!files.includes("Mulelogger.js")) {
+			files = dopen("libs/systems/").getFiles();
+			delay(50);
+		}
+	}
+
+	files.filter(file => file.endsWith(".js"))
+		.forEach(function (x) {
+			if (!includeIfNotIncluded("systems/" + x)) {
+				throw new Error("Failed to include systems/" + x);
+			}
+		});
+};
+
 /**
  * @param args
  * @returns Unit[]
  */
-const getUnits = (...args) => {
+const getUnits = function (...args) {
 	let units = [], unit = getUnit.apply(null, args);
 
 	if (!unit) {
@@ -74,7 +95,7 @@ const getUnits = (...args) => {
 	return units;
 };
 
-const clickItemAndWait = (...args) => {
+const clickItemAndWait = function (...args) {
 	let timeout = getTickCount(), timedOut;
 	let before = !me.itemoncursor;
 
@@ -101,7 +122,7 @@ const clickItemAndWait = (...args) => {
  *		as a result of us clicking it.
  * @returns boolean
  */
-const clickUnitAndWait = (button, shift, unit) => {
+const clickUnitAndWait = function (button, shift, unit) {
 	if (typeof (unit) !== "object") throw new Error("clickUnitAndWait: Third arg must be a Unit.");
 
 	let before = unit.mode;

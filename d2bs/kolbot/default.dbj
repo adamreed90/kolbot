@@ -9,15 +9,15 @@ js_strict(true);
 include("json2.js");
 include("NTItemParser.dbl");
 include("OOG.js");
-include("AutoMule.js");
-include("Gambling.js");
-include("CraftingSystem.js");
-include("TorchSystem.js");
-include("MuleLogger.js");
+include("automule.js");
+include("gambling.js");
+include("craftingsystem.js");
+include("torchsystem.js");
+include("mulelogger.js");
 include("GameAction.js");
 include("common/util.js");
-
 includeCommonLibs();
+includeSystemLibs();
 
 function main () {
 	D2Bot.init(); // Get D2Bot# handle
@@ -57,7 +57,7 @@ function main () {
 	
 	// don't load default for dropper/mules
 	if (getScript("D2BotDropper.dbj") || getScript("D2BotMule.dbj")) {
-		include("ItemDB.js");
+		include("itemdb.js");
 		load("tools/AreaWatcher.js");
 		load("tools/AntiIdle.js");
 		

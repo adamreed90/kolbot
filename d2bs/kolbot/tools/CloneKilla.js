@@ -7,14 +7,14 @@
 include("json2.js");
 include("NTItemParser.dbl");
 include("OOG.js");
-include("AutoMule.js");
+include("automule.js");
 include("craftingsystem.js");
-include("Gambling.js");
-include("TorchSystem.js");
-include("MuleLogger.js");
+include("gambling.js");
+include("torchsystem.js");
+include("mulelogger.js");
 include("common/util.js");
-
 includeCommonLibs();
+includeSystemLibs();
 
 function main() {
 	D2Bot.init();

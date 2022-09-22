@@ -24,17 +24,14 @@ const AutoBo = {
 
 	haveHelper: function () {
 		if (!Config.AutoBo.Boer) return false;
-		for (let boer in this.boers) {
-			if (this.boers[boer].character.toLowerCase() === Config.AutoBo.Boer.toLowerCase()) {
-				return this.boers[boer];
-			}
-		}
+		let boHelper = Object.keys(AutoBo.boers).find(key => key.toLowerCase() === Config.AutoBo.Boer.toLowerCase());
+		return boHelper ? AutoBo.boers[boHelper] : false;
 	},
 
 	getBo: function (preAct = me.act) {
 		let myBoer = this.haveHelper();
 		if (!myBoer || me.getState(sdk.states.BattleOrders)) return false;
-		let boHelper = Misc.findPlayerInArea(myBoer.area, myBoer.character);
+		let boHelper = Misc.poll(() => Misc.findPlayerInArea(myBoer.area, myBoer.character), Time.seconds(1), 200);
 		// game just started, delay a bit to see if they join
 		if (!boHelper && getTickCount() - me.gamestarttime < Time.seconds(5) || !me.gameReady) {
 			boHelper = Misc.poll(() => Misc.findPlayerInArea(myBoer.area, myBoer.character), Time.minutes(1), Time.seconds(1));
@@ -53,14 +50,14 @@ const AutoBo = {
 			delay(1000);
 			console.log("Got bo-ed");
 			// use wp back to town
-			Pather.useWaypoint(sdk.area.townOf(preAct), true);
+			Pather.useWaypoint(sdk.areas.townOf(preAct), true);
 		} catch (e) {
 			console.error(e);
 		} finally {
 			Town.allowBoScriptCheck = true;
 		}
 		
-		(me.act !== preAct || !me.inTown) && this.goToTown(preAct);
+		(me.act !== preAct || !me.inTown) && Town.goToTown(preAct);
 		
 		return true;
 	}
