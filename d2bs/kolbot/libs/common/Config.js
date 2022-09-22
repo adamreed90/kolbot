@@ -497,17 +497,22 @@ let Config = {
 		StopProfile: false,
 		SkipIfBaal: true,
 	},
+	AutoBo: {
+		Mode: -1,
+		Boer: "",
+	},
 	BattleOrders: {
 		Mode: 0,
 		Getters: [],
 		Idle: false,
 		QuitOnFailure: false,
 		SkipIfTardy: true,
-		Wait: 10
+		Wait: 10,
+		Wp: sdk.areas.CatacombsLvl2,
 	},
 	BoBarbHelper: {
 		Mode: -1,
-		Wp: 35
+		Wp: sdk.areas.CatacombsLvl2
 	},
 	ControlBot: {
 		Bo: false,

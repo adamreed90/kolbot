@@ -160,7 +160,7 @@ const Town = {
 		!me.inTown && this.goToTown();
 		if (!Misc.poll(() => me.gameReady && me.inTown, 2000, 250)) throw new Error("Failed to go to town for chores");
 
-		let preAct = me.act;
+		const preAct = me.act;
 
 		// Burst of speed while in town
 		if (Skill.canUse(sdk.skills.BurstofSpeed) && !me.getState(sdk.states.BurstofSpeed)) {
@@ -186,18 +186,8 @@ const Town = {
 		!!me.getItem(sdk.items.TomeofTownPortal) && this.clearScrolls();
 
 		// we are no longer bo'ed from our initial one, lets go get another
-		if (Town.allowBoScriptCheck && Scripts.BattleOrders && Config.BattleOrders.Mode === 1 && !me.getState(sdk.states.BattleOrders)) {
-			// first lets determine if bo-er is still in place - @todo better way to detemine if bo-er is running BoBarbHelper vs BattlerOrders
-			try {
-				Town.allowBoScriptCheck = false;
-				let possibleBoer = Misc.findPlayerInArea(sdk.areas.CatacombsLvl2);
-				if (possibleBoer) {
-					Loader.runScript("BattleOrders");
-					!me.inTown && Town.goToTown();
-				}
-			} finally {
-				Town.allowBoScriptCheck = true;
-			}
+		if (Town.allowBoScriptCheck && Scripts.AutoBoScript && Config.BattleOrders.Mode === 1 && !me.getState(sdk.states.BattleOrders)) {
+			AutoBo.getBo();
 		}
 
 		me.act !== preAct && this.goToTown(preAct);

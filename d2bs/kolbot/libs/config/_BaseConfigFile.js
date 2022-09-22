@@ -7,6 +7,13 @@
 	// User addon script. Read the description in libs/bots/UserAddon.js
 	Scripts.UserAddon = false; // !!!YOU MUST SET THIS TO FALSE IF YOU WANT TO RUN BOSS/AREA SCRIPTS!!!
 
+	// Auto bo script - Should be the first script in your list. Afterwards, the reciving characters will return for a bo
+	// during townchores if their own has run out. While the giver will stay at the specified waypoint running the BoBarbHelper script
+	// do not run if you wish your boer to participate in script, this keeps them at specified wp for duration of the game
+	Scripts.AutoBoScript = false;
+		Config.AutoBo.Mode = 1; // 0 = give BO, 1 = get BO
+		Config.AutoBo.Boer = ""; // set equal AutoBo.boers key, see libs/systems/AutoBo.js for setup. Example Config.AutoBo.Boer = "helperA";
+
 	// Battle orders script - Use this for 2+ characters
 	Scripts.BattleOrders = false;
 		Config.BattleOrders.Mode = 0; // 0 = give BO, 1 = get BO
@@ -15,6 +22,7 @@
 		Config.BattleOrders.QuitOnFailure = false; // Quit the game if BO fails
 		Config.BattleOrders.SkipIfTardy = true; // Proceed with scripts if other players already moved on from BO spot
 		Config.BattleOrders.Wait = 10; // Duration to wait for players to join game in seconds (default: 10)
+		Config.BoBarbHelper.Wp = sdk.areas.CatacombsLvl2; // 35
 
 	Scripts.BoBarbHelper = false; // specific HC script with BoBarb on the Bo area during whole game | set it only in barbarian config
 		Config.BoBarbHelper.Mode = -1; // 0 = give BO, -1 = disabled

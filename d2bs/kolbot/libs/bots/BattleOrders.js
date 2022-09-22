@@ -150,7 +150,7 @@ function BattleOrders () {
 	Town.doChores();
 
 	try {
-		Pather.useWaypoint(sdk.areas.CatacombsLvl2, true);
+		Pather.useWaypoint(Config.BattleOrders.Wp, true);
 	} catch (wperror) {
 		log("ÿc1Failed to take waypoint.");
 		Config.BattleOrders.QuitOnFailure && scriptBroadcast("quit");
