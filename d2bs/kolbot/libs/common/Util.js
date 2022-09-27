@@ -5,6 +5,7 @@
 *
 */
 
+!isIncluded("Polyfill.js") && include("Polyfill.js");
 // torn on if these include functions should be here or in polyfill - not exactly polyfill functions but sorta?
 const includeIfNotIncluded = function (file = "") {
 	if (!isIncluded(file)) {
@@ -17,7 +18,6 @@ const includeIfNotIncluded = function (file = "") {
 };
 
 const includeCommonLibs = function () {
-	includeIfNotIncluded("Polyfill.js");
 	let files = dopen("libs/common/").getFiles();
 	if (!files.length) throw new Error("Failed to find my files");
 	if (!files.includes("Pather.js")) {
@@ -38,7 +38,6 @@ const includeCommonLibs = function () {
 };
 
 const includeOOGLibs = function () {
-	includeIfNotIncluded("Polyfill.js");
 	let files = dopen("libs/oog/").getFiles();
 	if (!files.length) throw new Error("Failed to find my files");
 	if (!files.includes("DataFile.js")) {

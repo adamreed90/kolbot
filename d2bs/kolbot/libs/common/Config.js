@@ -293,6 +293,8 @@ let Config = {
 	// GameData
 	ChampionBias: 60,
 
+	UseCta: true,
+
 	// Attack specific
 	Dodge: false,
 	DodgeRange: 15,
@@ -367,6 +369,10 @@ let Config = {
 
 	// Custom Attack
 	CustomClassAttack: "", // If set it loads common/Attack/[CustomClassAttack].js
+
+	MapMode: {
+		UseOwnItemFilter: false,
+	},
 
 	// Script specific
 	MFLeader: false,

@@ -160,7 +160,7 @@ const Town = {
 		!me.inTown && this.goToTown();
 		if (!Misc.poll(() => me.gameReady && me.inTown, 2000, 250)) throw new Error("Failed to go to town for chores");
 
-		const preAct = me.act;
+		let preAct = me.act;
 
 		// Burst of speed while in town
 		if (Skill.canUse(sdk.skills.BurstofSpeed) && !me.getState(sdk.states.BurstofSpeed)) {
